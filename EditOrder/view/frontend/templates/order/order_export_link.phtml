@@ -1,0 +1,13 @@
+<?php
+
+
+/** @var Template $block */
+
+/** @var OrderExportLink $viewModel */
+
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportLink;
+
+$viewModel = $block->getData('view_model');
+?>
+<a href="<?= $viewModel->getOrderExportUrl() ?>"><?= __('Edit Order') ?></a>

@@ -1,0 +1,68 @@
+<?php
+
+
+/** @var Template $block */
+
+/** @var OrderExportView $viewModel */
+
+/** @var  Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportView;
+
+$viewModel = $block->getData('view_model');
+$backUrl = $viewModel->getOrderViewUrl();
+$orderData = $viewModel->getOrder();
+$editPaymentMethodUrl = $viewModel->editPaymentMethodUrl();
+$getPaymentMethods = $viewModel->getPaymentMethod();
+if ($backUrl):
+    ?>
+
+    <p class="back-link">
+        <a href="<?= $backUrl ?>"><?= __('Back to Order') ?></a>
+    </p>
+
+<?php
+endif;
+
+?>
+
+<?php $carriers = $viewModel->getPaymentMethod(); ?>
+<form name="saveEditSippingMethodData" method="post" action="<?= $editPaymentMethodUrl ?>"
+      data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+      data-mage-init='{"validation":{}}'>
+    <fieldset class="fieldset row">
+        <?php
+        if ($orderData->getId()) {
+            ?>
+            <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+            <?php
+        } ?>
+
+        <select name="payment_method" class="control-select">
+            <option value="">
+                <?php try {
+                    echo $viewModel->payment();
+                } catch (LocalizedException $e) {
+                } ?>
+            </option>
+            <?php foreach ($carriers as $carrier): ?>
+            <optgroup label="<?php echo $carrier['label'] ?>">
+
+            </optgroup>
+                <option value="<?php echo $carrier['value'] . '-' . $carrier['label'] ?>"><?php echo $carrier['label'] ?></option>
+
+            <?php endforeach; ?>
+        </select>
+
+        <div class="actions-toolbar" style="margin-top: 10px">
+            <div class="primary">
+                <button type="submit" class="action submit primary"
+                        title="Save"><span><?= $escaper->escapeHtmlAttr(__('Save')) ?></span></button>
+            </div>
+        </div>
+    </fieldset>
+</form>
+

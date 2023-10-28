@@ -1,0 +1,202 @@
+<?php
+/** @var Template $block */
+/** @var OrderExportView $viewModel */
+/** @var  Escaper $escaper */
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportView;
+$viewModel = $block->getData('view_model');
+$backUrl = $viewModel->getOrderViewUrl();
+$saveUrl = $viewModel->getSaveUrl();
+$saveBundleNameUrl = $viewModel->getSaveBundleUrl();
+$saveDeliveryUrl = $viewModel->editDeliveryUrl();
+$orderData = $viewModel->getOrder();
+$orderId = $viewModel->getOrder()->getData('entity_id');
+$newItem = $viewModel->getOrderDetails($orderId);
+if ($backUrl): ?>
+    <p class="back-link">
+        <a href="<?= $backUrl ?>"><?= __('Back to Order') ?></a>
+    </p>
+<?php
+endif;
+?>
+<style>
+    input[type=text], select {
+        text-transform: lowercase;
+    }
+</style>
+<?php if ($orderData->getId()):
+    $orderItems = $orderData->getAllItems();
+    ?>
+    <?php $items = $orderData->getAllItems();
+    $BundleName = false;
+    foreach ($items as $key) {
+        $subscriptionData = $key->getData('product_options')['info_buyRequest'];
+        if (!$BundleName) {
+            $BundleName = true;
+            {
+                ?>
+                <form name="addData" method="post" id="addData" class="form"
+                      autocomplete="off" action="<?= $saveBundleNameUrl ?>"
+                      data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+                      data-mage-init='{"validation":{}}'>
+                    <legend class="legend"><span><?php echo __('Edit Your Bundle Name') ?></span></legend>
+                    <?php
+                    if ($orderData->getId()) {
+                        ?>
+                        <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+                        <?php
+                    } ?>
+                    <fieldset class="fieldset">
+                        <div class="field required">
+                            <!-- form field -->
+                            <label for="email_address"
+                                   class="label"><span><?php echo __('Bundle Name') ?></span></label>
+                            <div class="control">
+                                <input type="text" name="bundle_name"
+                                       value="<?php echo htmlspecialchars($subscriptionData['bundlename']) ?>"
+                                       title="<?php echo __('Bundle Name') ?>" class="input-text"
+                                       data-validate="{required:true ,'validate-alphanum-with-spaces':true}">
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="actions-toolbar">
+                        <div class="primary">
+                            <button type="submit" class="action submit primary" title="<?php echo __('Save') ?>">
+                                <span><?php echo __('Save') ?></span></button>
+                        </div>
+                    </div>
+                </form><br>
+            <?php }
+        }
+    }
+    ?>
+    <legend class="legend"><span><?php echo __('Edit Product Quantity') ?></span></legend>
+    <table border="1">
+        <tr>
+            <th class="a"><?= __("ID") ?></th>
+            <th><?= __("Product Name") ?></th>
+            <th><?= __("Product Sku") ?></th>
+            <th><?= __("Product Price") ?></th>
+            <th><?= __("Product Qty ") ?></th>
+            <th><?= __("Sub Total") ?></th>
+            <th><?= __("Actions") ?></th>
+        </tr>
+        <?php foreach ($orderItems
+                       as $item): ?>
+            <tr>
+                <td><?= $escaper->escapeHtml($item->getId()) ?></td>
+                <td><?= $escaper->escapeHtml($item->getName()) ?></td>
+                <td><?= $escaper->escapeHtml($item->getsku()) ?></td>
+                <td><?= $escaper->escapeHtml($item->getPrice()) ?></td>
+                <form method="post" id="my-form" class="form"
+                      autocomplete="off" action="<?= $saveUrl ?>"
+                      data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+                      data-mage-init='{"validation":{}}'>
+                    <?php
+                    if ($orderData->getId()) {
+                        ?>
+                        <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+                    <?php } ?>
+                    <td>
+                        <input type='text' name="qty[<?php echo $item->getId(); ?>]"
+                               onkeypress="return validateNumber(event)"
+                               value="<?= $escaper->escapeHtml(intval($item->getQtyOrdered())) ?>"
+                               placeholder='Cant be empty' class='txtvalidator' validationType='NotEmpty'
+                               require='true'/>
+                    </td>
+                    <td><?= $escaper->escapeHtml($item->getRowTotal()) ?></td>
+                    <td>
+                        <?php
+                        if (count($orderData->getItems()) == 1) {
+                            $itemId = $item->getId() . '-' . $orderData->getId();
+                            ?>
+                            <a id="DeleteItems" style="margin-left: 9px" href="#" onclick="deleteOrderItem()">
+                                <?php echo __('Delete') ?>
+                            </a>
+                            <?php
+                        } else {
+                            // Code for the else condition
+                            $itemId = $item->getId() . '-' . $orderData->getId();
+                            ?>
+                            <a style="margin-left: 9px" href="<?php echo $viewModel->getDeleteAction($itemId); ?>">
+                                <?php echo __('Delete') ?>
+                            </a>
+                            <?php
+                        }
+                        ?>
+                    </td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    <div class="actions-toolbar" style="margin-top: 10px">
+        <div class="primary">
+            <button type="submit" class="action submit primary"
+                    value="submit" id='btnSave' title="Save"><span><?= $escaper->escapeHtmlAttr(__('Save')) ?></span></button>
+        </div>
+    </div>
+    </form>
+<?php endif; ?>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function deleteOrderItem() {
+        var itemId = <?php echo json_encode($item->getId() . '-' . $orderData->getId()); ?>;
+        var url = "<?php echo $viewModel->getDeleteAction($itemId); ?>";
+        var data = { item_id: itemId };
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: data,
+            showLoader: true,
+            cache: false,
+            success: function(response) {
+                if (response.redirectUrlSubscription) {
+                    window.location.href = response.redirectUrlSubscription;
+                }
+            },
+            error: function(xhr, status, error) {
+                // Handle error response
+            }
+        });
+    }
+</script>
+<script>
+    function validateNumber(e) {
+        const pattern = /^[0-9]$/;
+        return pattern.test(e.key)
+    }
+</script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#btnSave").click(function (event) {
+            $(".txtvalidatorMessage").remove(); // remove all messages
+            var inputs = $(".txtvalidator");
+            var isFormValid = true; // flag to track form validity
+            function ShowMessage(message, input) {
+                var messageContainer = $("<div class='txtvalidatorMessage error'>" + message + "</div>");
+                messageContainer.insertAfter(input); // show the message beside the input
+            }
+            inputs.each(function () {
+                var validationType = $(this).attr("validationType");
+                var require = eval($(this).attr("require"));
+                switch (validationType) {
+                    case "NotEmpty":
+                        if ($(this).val() === "" && require === true) {
+                            ShowMessage("<?= __('This field is required') ?>", $(this));
+                            isFormValid = false; // set the form validity flag to false
+                        }
+                        break;
+                }
+            });
+            if (!isFormValid) {
+                event.preventDefault(); // prevent form submission if the form is not valid
+            }
+        });
+    });
+</script>
+<style>
+    .error {
+        color: red;
+    }
+</style>

@@ -1,0 +1,61 @@
+<?php
+
+
+/** @var Template $block */
+
+/** @var OrderExportView $viewModel */
+
+/** @var  Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportView;
+
+$viewModel = $block->getData('view_model');
+$backUrl = $viewModel->getOrderViewUrl();
+$allShippingMethods = $viewModel->getShippingMethods();
+$editShippingMethodUrl = $viewModel->editShippingMethodUrl();
+$orderData = $viewModel->getOrder();
+
+?>
+<?php if ($backUrl): ?>
+
+    <p class="back-link">
+        <a href="<?= $backUrl ?>"><?= __('Back to Order') ?></a>
+    </p>
+
+<?php endif; ?>
+
+
+<?php $carriers = $viewModel->getShippingMethods(); ?>
+<form name="saveEditSippingMethodData" method="post" action="<?= $editShippingMethodUrl ?>"
+      data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+      data-mage-init='{"validation":{}}'>
+    <fieldset class="fieldset row">
+        <?php
+        if ($orderData->getId()) {
+            ?>
+            <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+            <?php
+        } ?>
+        <select name="shipping" class="control-select">
+            <option value=""><?= $orderData->getShippingDescription() ?></option>
+            <?php foreach ($carriers as $carrier): ?>
+                <optgroup label="<?php echo $carrier['label'] ?>">
+                    <?php foreach ($carrier['value'] as $child): ?>
+                        <option value="<?php /* @escapeNotVerified */
+                        echo $child['value'] . '-' . $child['label'] ?>">
+                            <?php /* @escapeNotVerified */
+                            echo $child['label']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </optgroup>
+            <?php endforeach; ?>
+        </select>
+        <div class="actions-toolbar" style="margin-top: 10px">
+            <div class="primary">
+                <button type="submit" class="action submit primary"
+                        title="Save"><span><?= $escaper->escapeHtmlAttr(__('Save')) ?></span></button>
+            </div>
+        </div>
+</form>

@@ -1,0 +1,492 @@
+<?php
+/** @var Items $block */
+/** @var OrderExportLink $viewModel */
+/** @var  Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\GiftMessage\Helper\Message;
+use Magento\Sales\Block\Order\Items;
+use Meiko\EditOrder\ViewModel\OrderExportLink;
+
+$viewModel = $block->getData('view_model');
+$orderId = $block->getOrder()->getData('entity_id');
+$newItem = $viewModel->getOrderDetails($orderId);
+if(isset($newItem['subscription'])) {
+    $subscription = $newItem['subscription'];
+    if (isset($subscription['delivery'])) {
+        $delivery = $newItem['subscription']['delivery'];
+    }
+}
+$date = strtotime($newItem['next_billing'] ?? '');
+?>
+<?php if($newItem){
+    if(($newItem->getStatus() == "Aktiv") || ($newItem->getStatus() == "Actif")){
+        ?>
+    <a href="<?= $viewModel->getDeliverySubscription() ?>"> <?= __('Delivery Date') ?> <i style="margin-left:5px" class="fa fa-edit"></i></a></br>
+    <?php
+    }
+}
+?>
+
+
+<?php $items = $block->getItems();
+$BundleName = false;
+foreach ($items as $key) {
+    $subscriptionData = $key->getData('product_options')['info_buyRequest'];
+    if (!$BundleName) { ?>
+        <div class="bundle-heading">
+            <?php if (isset($subscriptionData['bundlename'])): ?>
+                <?php echo '<h5 style="text-align: -moz-left; font-size: 20px;" style="font-weight:bold"> </h5>' . $subscriptionData['bundlename']; ?>
+
+            <?php endif; ?>
+        </div>
+        <?php   $BundleName = true;
+        break;
+
+    }
+}
+?>
+<?php  if($newItem){?>
+    <div align="center" class="subscribe-account">
+        <?php if ($newItem->getStatus() == "Aktiv" || $newItem->getStatus() == "Actif"): ?>
+            <button onclick="toggleVisibility('ButtonText')"><?= __('Subscribed') ?></button>
+        <?php endif; ?>
+
+        <?php if(($newItem->getStatus() == "Pausiert") || ($newItem->getStatus() == "En pause"))  { ?>
+            <button onclick="toggleVisibility('ButtonText')" ><?= __('Paused') ?></button>
+        <?php  } ?>
+        <div id="ButtonText"  style="display:none;">
+            <!-- Trigger/Open The Modal -->
+            <?php if($newItem->getStatus() == "Aktiv" || $newItem->getStatus() == "Actif") { ?>
+                <a id="myBtn" href="#"><?= __('Paused Subscription') ?></a>
+            <?php  } ?>
+            <?php if ($newItem->getStatus() == "Pausiert" || $newItem->getStatus() == "En pause"): ?>
+                <a href="<?= $viewModel->getResumeSubscription() ?>"><?= __('Resume Subscription') ?></a>
+            <?php endif; ?>
+
+            <?php if($newItem->getStatus() == "Aktiv" || $newItem->getStatus() == "Actif") { ?>
+            <a href="<?= $viewModel->getCancelSubscription() ?>" id="cancel-subscription-link"><?= __('Cancel Subscription') ?></a>
+            <!--        <a id="myBtnNew" href="#">Extend Subscription  </a>-->
+            <?php } ?>
+
+        </div>
+
+    </div>
+<?php  }  ?>
+
+
+<div class="table-wrapper order-items">
+    <table class="data table table-order-items" id="my-orders-table"
+           summary="<?= $escaper->escapeHtml(__('Items Ordered')) ?>">
+        <caption class="table-caption"><?= $escaper->escapeHtml(__('Items Ordered')) ?></caption>
+        <thead>
+        <?php if ($block->isPagerDisplayed()) : ?>
+            <tr>
+                <td colspan="5" data-block="order-items-pager-top" class="order-pager-wrapper order-pager-wrapper-top">
+                    <?= $block->getPagerHtml() ?>
+                </td>
+            </tr>
+        <?php endif ?>
+
+        <tr>
+            <th class="col actions" colspan="6">
+                <?php  if (is_object($newItem) && ($newItem->getStatus() != "Storniert") && ($newItem->getStatus() != "Annulée")) {?>
+                <a href="<?= $viewModel->getOrderExportUrl() ?>" class="action edit-order">
+
+                    <?= __('Edit Order') ?>
+                    <i class="fa fa-edit"></i>
+                    <?php }
+                    ?>
+                </a>
+                <h3 style="font-weight:bold"><?= __('Items') ?></h3>
+
+            </th>
+
+        </tr>
+
+        <tr>
+            <th class="col name"><?= $escaper->escapeHtml(__('Product Image')) ?></th>
+            <th class="col name"><?= $escaper->escapeHtml(__('Product Name')) ?></th>
+            <th class="col price"><?= $escaper->escapeHtml(__('Price')) ?></th>
+            <th class="col qty"><?= $escaper->escapeHtml(__('Qty')) ?></th>
+            <th class="col subtotal"><?= $escaper->escapeHtml(__('Subtotal')) ?></th>
+        </tr>
+        </thead>
+
+
+        <?php $giftMessage = '' ?>
+        <?php foreach ($items as $item) :
+            if ($item->getParentItem()) :
+                continue;
+            endif;
+            ?>
+            <tbody>
+
+            <?= $block->getItemHtml($item) ?>
+            <?php if ($this->helper(Message::class)->isMessagesAllowed('order_item', $item) && $item->getGiftMessageId()) : ?>
+                <?php $giftMessage = $this->helper(Message::class)->getGiftMessageForEntity($item); ?>
+                <tr>
+                    <td class="col options" colspan="5">
+                        <a href="#"
+                           id="order-item-gift-message-link-<?= (int)$item->getId() ?>"
+                           class="action show"
+                           aria-controls="order-item-gift-message-<?= (int)$item->getId() ?>"
+                           data-item-id="<?= (int)$item->getId() ?>">
+                            <?= $escaper->escapeHtml(__('Gift Message')) ?>
+                        </a>
+                        <?php $giftMessage = $this->helper(Message::class)->getGiftMessageForEntity($item); ?>
+                        <div class="order-gift-message" id="order-item-gift-message-<?= (int)$item->getId() ?>"
+                             role="region" aria-expanded="false" tabindex="-1">
+                            <a href="#"
+                               title="<?= $escaper->escapeHtml(__('Close')) ?>"
+                               aria-controls="order-item-gift-message-<?= (int)$item->getId() ?>"
+                               data-item-id="<?= (int)$item->getId() ?>"
+                               class="action close">
+                                <?= $escaper->escapeHtml(__('Close')) ?>
+                            </a>
+                            <dl class="item-options">
+                                <dt class="item-sender"><strong
+                                        class="label"><?= $escaper->escapeHtml(__('From')) ?></strong><?= $escaper->escapeHtml($giftMessage->getSender()) ?>
+                                </dt>
+                                <dt class="item-recipient"><strong
+                                        class="label"><?= $escaper->escapeHtml(__('To')) ?></strong><?= $escaper->escapeHtml($giftMessage->getRecipient()) ?>
+                                </dt>
+                                <dd class="item-message"><?= /* @noEscape */
+                                    $this->helper(Message::class)->getEscapedGiftMessage($item) ?></dd>
+                            </dl>
+                        </div>
+                    </td>
+                </tr>
+            <?php endif ?>
+            </tbody>
+        <?php endforeach; ?>
+        <tfoot>
+        <?php if ($block->isPagerDisplayed()) : ?>
+            <tr>
+                <td colspan="5" data-block="order-items-pager-bottom"
+                    class="order-pager-wrapper order-pager-wrapper-bottom">
+                    <?= $block->getPagerHtml() ?>
+                </td>
+            </tr>
+        <?php endif ?>
+        <?= $block->getChildHtml('order_totals') ?>
+        </tfoot>
+    </table>
+</div>
+<?php if ($giftMessage) : ?>
+    <script type="text/x-magento-init">
+    {
+        "a.action.show, a.action.close": {
+            "giftMessage": {}
+        }
+    }
+
+
+
+
+    </script>
+<?php endif; ?>
+<script>
+    function toggleVisibility(id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    }
+</script>
+
+<!-- Pause Subscription Modal -->
+<div id="myModal" class="modal">
+    <div class="modal-content date-modal">
+        <span class="close">&times;</span>
+        <h4> <?= __('Select a Date') ?></h4>
+        <form id="pause-subscription-form" action="<?= $viewModel->getPauseSubscription() ?>">
+            <div class="pause-wrap">
+                <label><?= __('Select Date To Pause') ?> </label>
+                <input type="date" id="PauseButton" name="PauseButton" value="<?php echo date("Y-m-d"); ?>" required min="<?php echo date("Y-m-d"); ?>">
+            </div>
+<input type="submit" id="messageButton" value="<?php echo __('Submit'); ?>">
+            <span><?= __('Note: The delivery will be paused immediately until the desired time.') ?><br/><br/>
+<?= __('Please note:') ?><br/>
+<?= __('If the next delivery has already been charged to your means of payment, it can no longer be paused. The pause follows the subsequent delivery.') ?>
+                <?= __('If no debit has occurred yet, the delivery will not be delivered.'); ?> </span>
+        </form>
+    </div>
+</div>
+
+
+<!-- Message Modal -->
+<div id="messageModal" class="modal">
+    <div class="modal-content date-modal">
+        <span class="close">&times;</span>
+        <form id="message-form">
+            <p><?= __('Are you sure you want to pause the subscription until:') ?> <span id="pause-date"></span></p>
+            <button type="button" id="confirmButton" class="btn btn-primary"><?= __('Confirm')?></button>
+            <button type="button" class="btn btn-secondary" id="cancelButton" data-dismiss="modal"><?= __('Cancel') ?></button>
+        </form>
+    </div>
+</div>
+
+
+
+
+<!-- Extend Subscription Modal -->
+<div id="extendModal" class="modal">
+    <div class="modal-content date-modal">
+        <span class="close">&times;</span>
+        <form action="<?= $viewModel->getSubscriptionExtended() ?>">
+            <input type="date" id="ExtendButton" name="ExtendButton">
+            <input type="submit">
+        </form>
+    </div>
+</div>
+
+<!-- Add the modal HTML -->
+<div id="cancel-modal" class="modal">
+    <div class="modal-content date-modal">
+        <p><?= __('Are you sure you want to cancel your subscription from'); ?> <span id="cancel-date"></span>?</p>
+        <p></p>
+        <button id="cancel-btn"><?= __('Yes') ?></button>
+        <button id="close-modal-btn"><?= __('No')?></button><br><br>
+        <span><?= __('Note: If you are going to cancel the subscription, and you already have been charged for the delivery then you will get the delivery.'); ?> </span>
+    </div>
+</div>
+
+
+<script>
+    function toggleVisibility(id) {
+        var x = document.getElementById(id);
+        if (x.style.display === "none") {
+            x.style.display = "block";
+        } else {
+            x.style.display = "none";
+        }
+    }
+
+    // Pause Subscription Modal
+    var modal = document.getElementById("myModal");
+    var messageModal = document.getElementById("messageModal");
+    var pauseForm = document.getElementById("pause-subscription-form");
+    var messageForm = document.getElementById("message-form");
+    var btn = document.getElementById("myBtn");
+    var MessageButton = document.getElementById("messageButton");
+    var span = document.getElementsByClassName("close")[0];
+    var pauseDate = document.getElementById("pause-date");
+
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+
+    MessageButton.onclick = function() {
+        messageModal.style.display = "block";
+    }
+
+    span.onclick = function() {
+        modal.style.display = "none";
+        messageModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            messageModal.style.display = "none";
+        }
+    }
+
+    pauseForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        pauseDate.textContent = document.getElementById("PauseButton").value;
+        messageModal.style.display = "block";
+        modal.style.display = "none";
+    });
+
+
+
+    confirmButton.addEventListener("click", function() {
+        messageModal.style.display = "none";
+        modal.style.display = "none";
+        // Submit the pause form
+        pauseForm.submit();
+    });
+
+    messageForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        // Handle confirm action
+    });
+
+
+    cancelButton.addEventListener("click", function() {
+        messageModal.style.display = "none";
+        modal.style.display = "none";
+    });
+
+
+    var extendModal = document.getElementById("extendModal");
+    var extendBtn = document.getElementById("myBtnNew");
+    var extendSpan = document.getElementsByClassName("close")[1];
+
+    extendBtn.onclick = function() {
+        extendModal.style.display = "block";
+    }
+
+    extendSpan.onclick = function() {
+        extendModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == extendModal) {
+            extendModal.style.display = "none";
+        }
+    }
+</script>
+<script>
+
+    $(".datepicker").datepicker({
+        inline: true,
+        showOtherMonths: true,
+        dateFormat: 'yy-mm-dd',
+    });
+
+    $(document).on('click', '#Button', function(e) {
+        var url = "<?php echo $block->getBaseUrl().'order_edit/index/pausesubscription/' ?>//";
+        var formdata = $(".datepicker[name=PauseButton]").val();
+        var date = new Date($('#PauseButton').val());
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: {numone:formdata}
+            showLoader: true,
+            cache: false,
+            success: function(data) {
+                location.reload();
+                alert("Save");
+            }
+        });
+        e.preventDefault();
+    });
+
+</script>
+
+<style>
+
+
+    /* The Modal (background) */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 100px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+    }
+
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+    }
+    .date-modal{
+        width: 25%;
+    }
+    .close {
+        color: #aaaaaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .pause-wrap label{
+        width: 49%;
+        height: 32px;
+        float: left;
+        padding: 6px 6px;
+        border: 1px solid #c2c2c2;
+        margin-right: 5px;
+        font-weight: 400;
+        font-size: 15px;
+        text-transform: capitalize;
+    }
+    .pause-wrap input {
+        width: 49%;
+    }
+    @media only screen and (max-width: 370px) {
+        .sales-order-view .order-details-items.ordered .date-modal form {
+            padding: 5px 5px;
+        }
+        .sales-order-view .order-details-items.ordered .date-modal {
+            width: 90%;
+            height: 50%;
+        }
+    }
+</style>
+
+
+<script>
+    const cancelSubscriptionLink = document.getElementById('cancel-subscription-link');
+    const cancelModal = document.getElementById('cancel-modal');
+    const cancelDateElement = document.getElementById('cancel-date');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    cancelSubscriptionLink.addEventListener('click', function(event) {
+        event.preventDefault();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const cancelDate = new Date().toJSON().slice(0, 10);
+        cancelDateElement.textContent = cancelDate;
+
+        cancelModal.style.display = "block";
+    });
+
+    closeModalBtn.addEventListener('click', function() {
+        cancelModal.style.display = "none";
+    });
+
+    // Close the modal if the user clicks outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target == cancelModal) {
+            cancelModal.style.display = "none";
+        }
+    });
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+    $(document).ready(function() {
+        $(document).on('click', '#cancel-btn', function(e) {
+
+            var url = "<?php echo $block->getBaseUrl() . 'order_edit/index/cancelorderwithsubsription/'; ?>";
+            var data = { order_id: '<?php echo $orderId ?>' };
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                data: data,
+                showLoader: true,
+                cache: false,
+                success: function (response) {
+                    if (response.redirectUrlSubscription) {
+                        window.location.href = response.redirectUrlSubscription + '?message=' + encodeURIComponent('subscription cancelled successfully');
+                    }
+                }
+            });
+            e.preventDefault();
+        });
+    });
+
+</script>

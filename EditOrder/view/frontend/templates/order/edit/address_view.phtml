@@ -1,0 +1,152 @@
+<?php
+
+
+/** @var Template $block */
+
+/** @var OrderExportView $viewModel */
+
+/** @var  Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportView;
+
+$viewModel = $block->getData('view_model');
+$backUrl = $viewModel->getOrderViewUrl();
+$editAddressUrl = $viewModel->editAddressUrl();
+
+$orderData = $viewModel->getOrder();
+if ($backUrl):
+    ?>
+
+    <p class="back-link">
+        <a href="<?= $backUrl ?>"><?= __('Back to Order') ?></a>
+    </p>
+
+<?php
+endif;
+if ($orderData->getId()) {
+    $shippingaddress = $orderData->getShippingAddress();
+    $custFirsrName = $shippingaddress->getFirstname();
+    $custLastName = $shippingaddress->getLastname();
+    $shippingcity = $shippingaddress->getCity();
+    $shippingstreet = $shippingaddress->getStreet() ? implode(', ', $shippingaddress->getStreet()) : '';
+    $shippingpostcode = $shippingaddress->getPostcode();
+    $shippingtelephone = $shippingaddress->getTelephone();
+    $shippingstate_code = $shippingaddress->getRegionCode();
+    $country = $shippingaddress->getCountryId();
+}
+
+?>
+<div class="row">
+    <div class="col-md-8">
+        <form name="addData" method="post" id="addData" class="form"
+              action="<?= $editAddressUrl ?>"
+              data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+              data-mage-init='{"validation":{}}'>
+            <fieldset class="fieldset">
+                <legend class="legend"><span><?= $escaper->escapeHtmlAttr(__('Edit Shipping Address')) ?></span>
+                </legend>
+                <fieldset class="fieldset row">
+                    <?php
+                    if ($orderData->getId()) {
+                        ?>
+                        <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+                        <?php
+                    } ?>
+
+                        <div class="field name required">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('First Name')) ?></span></label>
+                            <div class="control">
+                                <input name="firstname" id="name" title="First Name"
+                                       value="<?php echo $custFirsrName ?>"
+                                       class="input-text"
+                                       type="text"
+                                       data-validate="{required:true, 'validate-alphanum-with-spaces':true}">
+                            </div>
+                        </div>
+                        <div class="field name required">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('Last Name')) ?></span></label>
+                            <div class="control">
+                                <input name="lastname" id="name" title="Last Name"
+                                       value="<?php echo $custLastName ?>"
+                                       class="input-text"
+                                       type="text"
+                                       data-validate="{required:true, 'validate-alphanum-with-spaces':true}">
+                            </div>
+                        </div>
+
+                        <div class="field name required">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('Street Address')) ?></span></label>
+                            <div class="control">
+                                <input name="street" id="street" title="Street Address"
+                                       value="<?php echo $shippingstreet ?>"
+                                       class="input-text"
+                                       type="text"
+                                       data-validate="{required:true, 'validate-alphanum-with-spaces':true}">
+                            </div>
+                        </div>
+
+                        <div class="field name">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('City')) ?></span></label>
+                            <div class="control">
+                                <input name="city" id="street" title="City"
+                                       value="<?php echo $shippingcity; ?>"
+                                       class="input-text"
+                                       type="text"
+                                       readonly="readonly">
+                            </div>
+                        </div>
+                        <div class="field name">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('Post Code')) ?></span></label>
+                            <div class="control">
+                                <input name="postcode" title="post Code"
+                                       value="<?php echo $shippingpostcode; ?>"
+                                       class="input-text"
+                                       type="text"
+                                       data-validate="{required:true}">
+                            </div>
+                        </div>
+
+                        <div class="field name">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('Country')) ?></span></label>
+                            <div class="control">
+                                <input name="country_id" title="Country"
+                                       value="<?php echo $country ?>"
+                                       class="input-text"
+                                       type="text"
+                                       readonly="readonly">
+                            </div>
+                        </div>
+
+
+                        <div class="field name required">
+                            <label class="label"
+                                   for="title"><span><?= $escaper->escapeHtmlAttr(__('Phone Number')) ?></span></label>
+                            <div class="control">
+                                <input name="telephone" title="Telephone"
+                                       value="<?php echo $shippingtelephone; ?>"
+                                       class="input-text"
+                                       type="text"
+                                       data-validate="{required:true}">
+                            </div>
+                        </div>
+
+
+                </fieldset>
+            </fieldset>
+            <div class="actions-toolbar">
+                <div class="primary">
+                    <button type="submit" class="action submit primary"
+                            title="Save"><span><?= $escaper->escapeHtmlAttr(__('Save')) ?></span></button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

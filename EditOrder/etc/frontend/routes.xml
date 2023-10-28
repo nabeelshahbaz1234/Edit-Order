@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
+    <router id="standard">
+        <route id="order_edit" frontName="order_edit">
+            <module name="Meiko_EditOrder" />
+        </route>
+        <route id="order_delete" frontName="order_delete">
+            <module name="Meiko_EditOrder"/>
+        </route>
+        <route id="bundle_name" frontName="bundle_name">
+            <module name="Meiko_EditOrder"/>
+        </route>
+        <route id="delivery" frontName="delivery">
+            <module name="Meiko_EditOrder"/>
+        </route>
+        <route id="order_extend" frontName="order_extend">
+            <module name="Meiko_EditOrder"/>
+        </route>
+    </router>
+</config>

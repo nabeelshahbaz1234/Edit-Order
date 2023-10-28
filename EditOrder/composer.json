@@ -1,0 +1,20 @@
+{
+  "name": "Meiko/module-EditOrder",
+  "version": "1.0.0",
+  "description": "N/A",
+  "type": "magento2-module",
+  "require": {
+    "../../../../vendor/magento/framework": "*"
+  },
+  "license": [
+    "Proprietary"
+  ],
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Order\\Edit\\": ""
+    }
+  }
+}

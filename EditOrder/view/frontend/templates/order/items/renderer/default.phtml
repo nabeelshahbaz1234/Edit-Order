@@ -1,0 +1,154 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var  $block DefaultRenderer
+ * @var $escaper Escaper
+ */
+
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Escaper;
+use Meiko\EditOrder\Block\Order\Item\Renderer\DefaultRenderer;
+
+
+$_item = $block->getItem();
+$orderId = $block->getOrder()->getData('entity_id');
+
+?>
+
+<?php
+
+$subscriptionData = $_item->getData('product_options')['info_buyRequest'];
+$newItem = $block->getOrderDetails($orderId);
+
+?>
+<tr id="order-item-row-<?= (int)$_item->getId() ?>">
+
+    <?php
+    $imageUrl = '';
+    $objectmanager = ObjectManager::getInstance();
+    $product_id = $_item->getProductId();
+    $productimages = array();
+    $product = $objectmanager->create('Magento\Catalog\Model\Product')->load($product_id);
+    $productimages = $product->getMediaGalleryImages();
+    foreach ($productimages as $productimage) {
+        $imageUrl = $productimage['url'];
+    }
+    ?>
+    <td>
+        <div class="product-image">
+            <img src="<?php echo $imageUrl ?>" alt=""/>
+        </div>
+    </td>
+    <td class="col name" data-th="<?= $escaper->escapeHtml(__('Product Name')) ?>"
+    <?php
+    if (isset($subscriptionData['am_rec_start_date']) && isset($subscriptionData['am_rec_end_date'])) {
+        if ($subscriptionData['am_rec_start_date'] == $subscriptionData['am_rec_end_date']) {
+            ?>
+            <strong> <?= __('One Time Purchased') ?> </strong>
+        <?php }
+    }
+
+    ?>
+    <?php  ?>
+    <strong class="product name product-item-name"><?= $escaper->escapeHtml($_item->getName())
+        ?></strong>
+    <?php if ($_options = $block->getItemOptions()): ?>
+        <dl class="item-options">
+            <?php foreach ($_options as $_option): ?>
+                <dt><?= $escaper->escapeHtml($_option['label']) ?></dt>
+                <?php if (!$block->getPrintStatus()): ?>
+                    <?php $_formatedOptionValue = $block->getFormatedOptionValue($_option) ?>
+                    <dd<?= (isset($_formatedOptionValue['full_view']) ? ' class="tooltip wrapper"' : '') ?>>
+                        <?= $escaper->escapeHtml($_formatedOptionValue['value'], ['a']) ?>
+                        <?php if (isset($_formatedOptionValue['full_view'])): ?>
+                            <div class="tooltip content">
+                                <dl class="item options">
+                                    <dt><?= $escaper->escapeHtml($_option['label']) ?></dt>
+                                    <dd><?= $escaper->escapeHtml($_formatedOptionValue['full_view']) ?></dd>
+                                </dl>
+                            </div>
+                        <?php endif; ?>
+                    </dd>
+                <?php else: ?>
+                    <?php $optionValue = isset($_option['print_value']) ? $_option['print_value'] : $_option['value'] ?>
+                    <dd><?= $escaper->escapeHtml($optionValue) ?></dd>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </dl>
+    <?php endif; ?>
+    <?php $addtInfoBlock = $block->getProductAdditionalInformationBlock(); ?>
+    <?php if ($addtInfoBlock): ?>
+        <?= $addtInfoBlock->setItem($_item)->toHtml() ?>
+    <?php endif; ?>
+    <?= $escaper->escapeHtml($_item->getDescription()) ?>
+    <br>
+
+<?php
+    if(isset($_item->getData('product_options')['info_buyRequest']['am_rec_end_date'])) {
+        $endDate = $_item->getData('product_options')['info_buyRequest']['am_rec_end_date'];
+        if(!empty($endDate)){
+            $endDate = date('Y-m-d' , strtotime($endDate));
+        } else {
+            $endDate = __("Infinite ");
+        }
+        ?>
+        <h5><strong><?= __('End Date:') ?></strong> <?= $endDate ?></h5>
+        <?php
+    }else if(isset($_item->getData('product_options')['info_buyRequest']['am_rec_count_cycles'])) {
+        $endDate = $_item->getData('product_options')['info_buyRequest']['am_rec_count_cycles'];
+        foreach ($newItem as $subscriptionItem){
+            $endDate =  $subscriptionItem->getData('subscription')['end_date'];
+        }
+        if(!empty($endDate)){
+            $endDate = date('Y-m-d' , strtotime($endDate));
+        } else {
+            $endDate = __("Infinite ");
+        }
+        ?>
+        <h5><strong><?=  __('End Date:') ?> </strong> <?= $endDate ?></h5>
+        <?php
+    }
+    else {
+        echo __("End Date : Infinite ");
+    }
+    ?>
+
+    </td>
+    <td class="col price" data-th="<?= $escaper->escapeHtml(__('Price')) ?>">
+        <?= $block->getItemPriceHtml() ?>
+    </td>
+    <td class="col qty" data-th="<?= $escaper->escapeHtml(__('Qty')) ?>">
+        <ul class="items-qty">
+            <?php if ($block->getItem()->getQtyOrdered() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $escaper->escapeHtml(__('Ordered')) ?></span>
+                    <span class="content"><?= (float)$block->getItem()->getQtyOrdered() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyShipped() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $escaper->escapeHtml(__('Shipped')) ?></span>
+                    <span class="content"><?= (float)$block->getItem()->getQtyShipped() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyCanceled() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $escaper->escapeHtml(__('Canceled')) ?></span>
+                    <span class="content"><?= (float)$block->getItem()->getQtyCanceled() ?></span>
+                </li>
+            <?php endif; ?>
+            <?php if ($block->getItem()->getQtyRefunded() > 0): ?>
+                <li class="item">
+                    <span class="title"><?= $escaper->escapeHtml(__('Refunded')) ?></span>
+                    <span class="content"><?= (float)$block->getItem()->getQtyRefunded() ?></span>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </td>
+    <td class="col subtotal" data-th="<?= $escaper->escapeHtml(__('Subtotal')) ?>">
+        <?= $block->getItemRowTotalHtml() ?>
+    </td>
+</tr>

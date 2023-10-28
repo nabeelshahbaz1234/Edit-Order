@@ -1,0 +1,145 @@
+.account.order_edit-view-index .field.name label {
+    font-size: 21px;
+    padding-left: 0;
+    display: block;
+    margin-bottom: 8px;
+}
+.account.order_edit-view-index .field.name {
+    padding-bottom: 20px;
+    .control input,
+    .control select
+    {
+        width: 50%;
+    }
+}
+.order_edit-view-index fieldset.fieldset.row {
+    display: none;
+}
+.order_edit-view-index table{
+    margin-top: 40px;
+}
+.sales-order-view .order-details-items.ordered .date-modal {
+    width: 30%;
+    height: 40%;
+    padding: 0;
+    h4{
+        background-color: #c8dd59;
+        padding: 15px 15px;
+    }
+    .close{
+        color: #000;
+        padding-right: 15px;
+        padding-top: 14px;
+        opacity: 1;
+    }
+    form{
+        padding: 10px 15px;
+        #messageButton{
+            margin: 25px auto;
+            display: block;
+            width: 100px;
+            height: 32px;
+            background-color: #c8dd59;
+            border: none;
+        }
+    }
+}
+
+.sales-order-view .order-details-items.ordered #messageModal{
+    .date-modal {
+        height: 32%;
+    }
+    form{
+        padding: 35px 32px;
+        #confirmButton{
+            background-color: #c8dd59;
+            border: none;
+            color: #000;
+        }
+    }
+}
+
+.sales-order-view .order-details-items.ordered #cancel-modal{
+    .date-modal {
+        height: 32%;
+        padding: 20px 25px;
+    }
+    #cancel-btn{
+        background-color: #c8dd59;
+        border: none;
+        color: #000;
+        width: 100px;
+        height: 32px;
+    }
+    #close-modal-btn{
+        width: 100px;
+        height: 32px;
+    }
+}
+
+
+@media screen and (max-width: 1023px) {
+    .sales-order-view .order-details-items.ordered .date-modal {
+        width: 80%;
+        height: 32%;
+        padding: 0;
+        margin: 0 auto;
+    }
+}
+
+
+.sales-order-view input[type="date"]::-webkit-inner-spin-button,
+.sales-order-view input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+}
+input#PauseButton:before {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 23px;
+    line-height: 23px;
+    color: #7d7d7d;
+    content: '\e612';
+    font-family: 'luma-icons';
+    vertical-align: middle;
+    display: inline-block;
+    font-weight: normal;
+    overflow: hidden;
+    speak: none;
+    text-align: center;
+    right: 24px;
+    position: absolute;
+    pointer-events: all;
+}
+
+
+.order_edit-view-deliverydate #delivery label, .order_edit-view-deliverydate #delivery label span{
+    display: block;
+    padding-bottom: 12px;
+    font-size: 16px;
+}
+
+.order_edit-view-deliverydate #delivery_day, .order_edit-view-deliverydate #datepicker{
+    width: 25%;
+    margin-bottom: 5px;
+}
+.order_edit-view-deliverydate #delivery .submit{
+   border-color: #b7cf39 !important;
+}
+
+
+.sales-order-view input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+html #PauseButton {
+     position: relative;
+}

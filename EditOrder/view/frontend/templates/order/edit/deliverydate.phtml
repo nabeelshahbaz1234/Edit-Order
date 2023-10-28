@@ -1,0 +1,169 @@
+<?php
+
+/** @var Template $block */
+
+/** @var OrderExportView $viewModel */
+
+/** @var  Escaper $escaper */
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Meiko\EditOrder\ViewModel\OrderExportView;
+
+$viewModel = $block->getData('view_model');
+$backUrl = $viewModel->getOrderViewUrl();
+$saveDeliveryUrl = $viewModel->editDeliveryUrl();
+$orderData = $viewModel->getOrder();
+$orderId = $viewModel->getOrder()->getData('entity_id');
+$newItem = $viewModel->getOrderDetails($orderId);
+if($newItem){
+    if(isset($newItem->getData('subscription')['ship_date'])) {
+        $date = strtotime($newItem->getData('subscription')['ship_date']) ;
+    } }else {
+    $date = '';
+}
+
+if ($backUrl): ?>
+
+    <p class="back-link">
+        <a href="<?= $backUrl ?>"><?= __('Back to Order') ?></a>
+    </p>
+<?php
+endif;
+?>
+
+<?php
+{
+
+    ?>
+    <form name="delivery" method="post" id="delivery" class="form"
+          action="<?= $saveDeliveryUrl ?>"
+          data-hasrequired="<?= $escaper->escapeHtmlAttr(__('* Required Fields')) ?>"
+          data-mage-init='{"validation":{}}'>
+        <?php
+        if ($orderData->getId()) {
+            ?>
+            <input type="hidden" name="id" value="<?php echo $orderData->getId(); ?>">
+            <?php
+        } ?>
+
+
+        <div class="field name required" align="left">
+<label class="label" style="font-size: 30px" for="title">
+    <span style="margin-left: 351px;"><?= $escaper->escapeHtmlAttr(__("Delivery Schedule")) ?></span>
+</label> <br>
+            <?php
+            if($newItem){
+                if($newItem->getData('subscription')['frequency_unit'] == 'month'){
+
+                    ?>
+                    <label><span><?= $escaper->escapeHtmlAttr(__('Change Delivery Date:')) ?></span>
+</label>                       
+ <input type="date" id="datepicker" name="delivery_date" value="<?php
+                        $dates = strtotime($date);
+                        $formatted_date = date('Y-m-d', $date);
+                        echo $formatted_date;
+                        ?>" min="<?= date('Y-m-01') ?>" max="<?= date('Y-m-t') ?>">
+                <?php }  else { ?>
+<label for="delivery-schedule">
+    <span><?= $escaper->escapeHtmlAttr(__("Change Delivery Day:")) ?></span>
+</label>
+
+                    <select name="delivery_day" id="delivery_day">
+                        <option value="1"><?= __('Monday') ?></option>
+                        <option value="2"><?= __('Tuesday') ?></option>
+                        <option value="3"><?= __('Wednesday') ?></option>
+                        <option value="4"><?= __('Thursday') ?></option>
+                        <option value="5"><?= __('Friday') ?></option>
+                    </select>
+                <?php }
+            }
+            ?>
+        </div>
+        <div class="actions-toolbar" style="margin-top: 10px">
+            <div class="primary">
+                <button type="submit" class="action submit primary"
+                        title="Save"><span><?= $escaper->escapeHtmlAttr(__('Save')) ?></span></button>
+            </div>
+        </div>
+    </form>
+    <?php
+
+}
+
+?>
+<?php
+if($newItem->getData('subscription')['frequency_unit'] == 'month') {
+    $shipDate = explode(" ", $newItem->getData('subscription')['ship_date'])[0];
+    $c_date_obj = new DateTime();
+    $s_date_obj = new DateTime($shipDate);
+    $c_day = (int)$c_date_obj->format('d') + 4;
+    $c_m = (int)$c_date_obj->format('m');
+    $s_m = (int)$s_date_obj->format('m');
+    $f_m = __($s_date_obj->format('F'));
+    $newBDate = date('Y-m-d', strtotime('-4 day', strtotime($shipDate)));
+    $currDate = __(date('Y-m-d'));
+    ?>
+<div>
+    <br><br>
+    <span style="font-weight: bold"><?= __('Note:') ?></span><br>
+    <span><?= __('Today is <strong style="font-weight: bolder">%1</strong> and Your next shipment date is <strong style="font-weight: bolder">%2</strong>.', date("Y-m-d"), $shipDate) ?></span>
+    <br>
+<span><?= __('You can change the date for the month of %1.', $f_m) ?></span><br>
+<span><?= $block->escapeHtml(__('If you face any problem or have any query, feel free to contact us.')) ?></span>
+</div>
+<?php }
+if($newItem->getData('subscription')['frequency_unit'] == 'week') {
+    $shipDate = explode(" ", $newItem->getData('subscription')['ship_date'])[0];
+    $c_date_obj = new DateTime();
+    $s_date_obj = new DateTime($shipDate);
+    $c_day = (int)$c_date_obj->format('d') + 4;
+    $c_m = (int)$c_date_obj->format('m');
+    $s_m = (int)$s_date_obj->format('m');
+    $s_day = __($s_date_obj->format('l'));
+    $f_m =__( $s_date_obj->format('F'));
+    $newBDate = __(date('l', strtotime('-4 day', strtotime($shipDate))));
+    $currDate = __(date("l"));
+    $fnewBDate = (int)date('d', strtotime('-4 day', strtotime($shipDate)));
+    $fcurrDate = (int)date('d');
+    ?>
+<div>
+    <br><br>
+    <span style="font-weight: bold"><?= __('Note:') ?></span><br>
+    <span>
+<?= __('Today is <strong style="font-weight: bolder">%1</strong> and Your next shipment day is <strong style="font-weight: bolder">%2</strong>.', $currDate, $s_day) ?>
+
+    </span>
+    <br>
+    <span><?= __('The day you select/change will be changed for the next week if you have already been charged for the current week.') ?></span><br>
+
+    <?php if ($fcurrDate - $fnewBDate <= 4) { ?>
+        <span>
+            <?= __('As today is <strong style="font-weight: bolder">%1</strong> and your shipment is on <strong style="font-weight: bolder">%2</strong> which may have already been charged to you by <strong style="font-weight: bolder">%3</strong>. If yes, then you will get the delivery on <strong style="font-weight: bolder">%2</strong> even if you change the day.', $currDate, $s_day, $newBDate) ?>
+        </span><br>
+    <?php } else { ?>
+        <span>
+            <?= __('You can change the day of your week <strong style="font-weight: bolder">%1</strong>.', $f_m) ?>
+        </span><br>
+    <?php } ?>
+
+    <span><?= __('If you face any problem or have any query, feel free to contact us.') ?></span>
+</div>
+<?php } ?>
+
+<title>Datepicker with disabled month and year fields</title>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="//code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="//code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    $(function() {
+        $("#datepicker").datepicker({
+            changeMonth: false,
+            changeYear: false,
+            dateFormat: "dd",
+            beforeShowDay: function(date) {
+                return [(date.getMonth() == (new Date()).getMonth()), ''];
+            }
+        });
+    });
+</script>
